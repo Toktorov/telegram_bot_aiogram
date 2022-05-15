@@ -40,9 +40,7 @@ class dialog(StatesGroup):
 @dp.message_handler(content_types=['text'], text='Добавить расписание')
 async def add_command(message: Message):
     if message.from_user.id == ADMIN:
-        await message.answer('Напишите название курса')
-        await dialog.command.set()
-        await message.answer('Напишите расписание')
+        await message.answer('Сперва напишите название курса и потом расписание. Например \nTima-Pov-12 Пн-Ср-Пт 16:00')
         await dialog.command.set()
     else:
         await message.answer('Вы не являетесь админом')
@@ -58,8 +56,10 @@ async def start_command(message: Message, state: FSMContext):
         await message.answer('Главное меню', reply_markup=keyboard)
         await state.finish()
     else:
+        split_text = message.text.split()
+        print(split_text)
         cur = conn.cursor()
-        cur.execute(f'''INSERT INTO courses (course, description) VALUES ({message.from_user.id}, {message.from_user.id});''')
+        cur.execute(f'''INSERT INTO courses (course, description) VALUES ({split_text[0]}, {split_text[1]});''', split_text)
         command_base = cur.fetchall()
         print(command_base)
         cur.execute(f'SELECT * FROM courses;')
