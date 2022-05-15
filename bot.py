@@ -7,8 +7,8 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import Message
 
-API_TOKEN = '5162010506:AAGf3iVihs1T25Ze4mDSYxpe_skRwA1gZUE' # мы получили в первой статье
-ADMIN = 1815007884
+API_TOKEN = '5162010506:AAGf3iVihs1T25Ze4mDSYxpe_skRwA1gZUE' # токен
+ADMIN = 1815007884 #id admin
 
 logging.basicConfig(level=logging.INFO)
 
@@ -23,8 +23,8 @@ cur.execute("""CREATE TABLE IF NOT EXISTS users(
    block INTEGER);
 """)
 conn.commit()
-cur.execute("""CREATE TABLE IF NOT EXISTS courses(
-   course VARCHAR(255),
+
+cur.execute("""CREATE TABLE IF NOT EXISTS schedule(
    description VARCHAR(255));
 """)
 conn.commit()
@@ -35,7 +35,9 @@ class dialog(StatesGroup):
     blacklist = State()
     whitelist = State()
     command = State()
+    all_command = State()
 
+#Добавить расписание
 
 @dp.message_handler(content_types=['text'], text='Добавить расписание')
 async def add_command(message: Message):
@@ -53,23 +55,60 @@ async def start_command(message: Message, state: FSMContext):
         keyboard.add(types.InlineKeyboardButton(text="Добавить в ЧС"))
         keyboard.add(types.InlineKeyboardButton(text="Убрать из ЧС"))
         keyboard.add(types.InlineKeyboardButton(text="Добавить расписание"))
+        keyboard.add(types.InlineKeyboardButton(text="Все расписании"))
         await message.answer('Главное меню', reply_markup=keyboard)
         await state.finish()
     else:
-        split_text = message.text.split()
-        print(split_text)
         cur = conn.cursor()
-        cur.execute(f'''INSERT INTO courses (course, description) VALUES ({split_text[0]}, {split_text[1]});''', split_text)
+        cur.execute(f'''INSERT INTO schedule VALUES ('{message.text}')''')
         command_base = cur.fetchall()
         print(command_base)
-        cur.execute(f'SELECT * FROM courses;')
+        cur.execute(f'SELECT * FROM schedule;')
         print(cur.fetchall())
-        # for z in range(len(command_base)):
-        #     print(command_base[z][0])
-        # for z in range(len(command_base)):
-        #     await bot.send_message(command_base[z][0], message.text)
         await message.answer('Группы добавлены')
         await state.finish()
+
+#Вывести все расписании
+
+@dp.message_handler(content_types=['text'], text='Все расписании')
+async def add_command(message: Message):
+    await message.answer('Вот все расписании')
+    # await dialog.all_command.set()
+    cur = conn.cursor()
+    cur.execute(f'''SELECT * FROM schedule''')
+    command_base = cur.fetchall()
+    print(command_base)
+    for i in command_base:
+        for n in i:
+            await message.answer(n)
+        
+
+@dp.message_handler(state=dialog.all_command)
+async def start_command(message: Message, state: FSMContext):
+    if message.text == 'Назад':
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        keyboard.add(types.InlineKeyboardButton(text="Рассылка"))
+        keyboard.add(types.InlineKeyboardButton(text="Добавить в ЧС"))
+        keyboard.add(types.InlineKeyboardButton(text="Убрать из ЧС"))
+        keyboard.add(types.InlineKeyboardButton(text="Добавить расписание"))
+        keyboard.add(types.InlineKeyboardButton(text="Все расписании"))
+        await message.answer('Главное меню', reply_markup=keyboard)
+        await state.finish()
+    else:
+        cur = conn.cursor()
+        cur.execute(f'''SELECT * FROM schedule''')
+        command_base = cur.fetchall()
+        print(command_base)
+        for i in command_base:
+            await message.answer(i)
+        # print(command_base)
+        # cur.execute(f'SELECT * FROM schedule;')
+        # print(cur.fetchall())
+        # await message.answer('Группы добавлены')
+        await state.finish()
+
+
+#Пользователи
 
 @dp.message_handler(content_types=['text'], text='Все пользователи')
 async def add_command(message: Message):
@@ -95,7 +134,8 @@ async def start(message: Message):
         keyboard.add(types.InlineKeyboardButton(text="Добавить в ЧС"))
         keyboard.add(types.InlineKeyboardButton(text="Убрать из ЧС"))
         keyboard.add(types.InlineKeyboardButton(text="Добавить расписание"))
-        await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре', reply_markup=keyboard)
+        keyboard.add(types.InlineKeyboardButton(text="Все расписании"))
+        await message.answer(f'Добро пожаловать в Админ-Панель {message.from_user.username}! Выберите действие на клавиатуре', reply_markup=keyboard)
     else:
         if result is None:
             cur = conn.cursor()
@@ -126,6 +166,7 @@ async def start_spam(message: Message, state: FSMContext):
         keyboard.add(types.InlineKeyboardButton(text="Добавить в ЧС"))
         keyboard.add(types.InlineKeyboardButton(text="Убрать из ЧС"))
         keyboard.add(types.InlineKeyboardButton(text="Добавить расписание"))
+        keyboard.add(types.InlineKeyboardButton(text="Все расписании"))
         await message.answer('Главное меню', reply_markup=keyboard)
         await state.finish()
     else:
@@ -149,6 +190,7 @@ async def back(message: Message):
         keyboard.add(types.InlineKeyboardButton(text="Добавить в ЧС"))
         keyboard.add(types.InlineKeyboardButton(text="Убрать из ЧС"))
         keyboard.add(types.InlineKeyboardButton(text="Добавить расписание"))
+        keyboard.add(types.InlineKeyboardButton(text="Все расписании"))
         await message.answer('Главное меню', reply_markup=keyboard)
     else:
         await message.answer('Вам не доступна эта функция')
@@ -173,6 +215,7 @@ async def proce(message: types.Message, state: FSMContext):
         keyboard.add(types.InlineKeyboardButton(text="Добавить в ЧС"))
         keyboard.add(types.InlineKeyboardButton(text="Убрать из ЧС"))
         keyboard.add(types.InlineKeyboardButton(text="Добавить расписание"))
+        keyboard.add(types.InlineKeyboardButton(text="Все расписании"))
         await message.answer('Отмена! Возвращаю назад.', reply_markup=keyboard)
         await state.finish()
     else:
@@ -237,6 +280,7 @@ async def proc(message: types.Message, state: FSMContext):
         keyboard.add(types.InlineKeyboardButton(text="Добавить в ЧС"))
         keyboard.add(types.InlineKeyboardButton(text="Убрать из ЧС"))
         keyboard.add(types.InlineKeyboardButton(text="Добавить расписание"))
+        keyboard.add(types.InlineKeyboardButton(text="Все расписании"))
         await message.answer('Отмена! Возвращаю назад.', reply_markup=keyboard)
         await state.finish()
     else:
@@ -251,6 +295,7 @@ async def proc(message: types.Message, state: FSMContext):
                 keyboard.add(types.InlineKeyboardButton(text="Добавить в ЧС"))
                 keyboard.add(types.InlineKeyboardButton(text="Убрать из ЧС"))
                 keyboard.add(types.InlineKeyboardButton(text="Добавить расписание"))
+                keyboard.add(types.InlineKeyboardButton(text="Все расписании"))
                 await message.answer('Такой пользователь не найден в базе данных.', reply_markup=keyboard)
                 await state.finish()
             else:
@@ -265,6 +310,7 @@ async def proc(message: types.Message, state: FSMContext):
                     keyboard.add(types.InlineKeyboardButton(text="Добавить в ЧС"))
                     keyboard.add(types.InlineKeyboardButton(text="Убрать из ЧС"))
                     keyboard.add(types.InlineKeyboardButton(text="Добавить расписание"))
+                    keyboard.add(types.InlineKeyboardButton(text="Все расписании"))
                     await message.answer('Пользователь успешно разбанен.', reply_markup=keyboard)
                     await state.finish()
                     await bot.send_message(message.text, 'Вы были разблокированы администрацией.')
