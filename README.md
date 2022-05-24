@@ -8,3 +8,4 @@ In the eleventh line where where is the admin variable, change the id to your ow
 ### `@getmyid_bot`
 If you don’t know where to get your id, then I advise you to telegram bot @getmyid_bot
 Thank you for your attention and good luck!
+After the runserver everything should work, good luck!
